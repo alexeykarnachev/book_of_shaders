@@ -1,16 +1,12 @@
-use book_of_shaders::{RenderState, Renderer};
-use glium::{
-    uniform,
-    uniforms::{EmptyUniforms, UniformsStorage},
-};
+use book_of_shaders::Renderer;
 
 const FRAGMENT_SHADER: &str = r#"
     #version 460
     // HSL and HSV: https://en.wikipedia.org/wiki/HSL_and_HSV
 
     uniform float u_time;
-    uniform vec2 u_display_size;
-    uniform vec2 u_cursor_coords;
+    uniform vec2 u_resolution;
+    uniform vec2 u_cursor;
 
     float PI = 3.14159265359;
 
@@ -43,12 +39,12 @@ const FRAGMENT_SHADER: &str = r#"
 
 
     void main() {
-        vec2 coords = gl_FragCoord.xy / u_display_size;
+        vec2 coords = gl_FragCoord.xy / u_resolution;
 
-        vec2 center = vec2(u_cursor_coords.x, u_display_size.y - u_cursor_coords.y) / u_display_size;
+        vec2 center = vec2(u_cursor.x, u_cursor.y) / u_resolution;
         vec2 to_center = center - coords;
         float angle = (atan(to_center.y, to_center.x) + u_time);
-        angle = angle - float(int((angle + u_time) / 2 * PI));
+        angle = angle - float(int((angle + u_time) / 0.5 * PI));
         float radius = length(to_center) * 2.0;
         
         vec3 hsb = vec3((angle / 2 * PI) + 0.5, radius, 1.0);
@@ -57,21 +53,7 @@ const FRAGMENT_SHADER: &str = r#"
     }
 "#;
 
-type U = UniformsStorage<
-    'static,
-    (f32, f32),
-    UniformsStorage<'static, (f32, f32), UniformsStorage<'static, f32, EmptyUniforms>>,
->;
-
-fn uniforms_f(render_state: RenderState) -> U {
-    uniform! {
-        u_time: render_state.passed_time,
-        u_display_size: render_state.display_size,
-        u_cursor_coords: render_state.cursor_coords,
-    }
-}
-
 fn main() {
     let renderer = Renderer::from_fragment_shader(FRAGMENT_SHADER);
-    renderer.draw(&uniforms_f);
+    renderer.draw();
 }

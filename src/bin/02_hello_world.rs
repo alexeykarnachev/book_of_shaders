@@ -1,5 +1,4 @@
-use book_of_shaders::{RenderState, Renderer};
-use glium::{uniform, uniforms::EmptyUniforms};
+use book_of_shaders::Renderer;
 
 const FRAGMENT_SHADER: &str = r#"
     #version 460
@@ -15,11 +14,7 @@ const FRAGMENT_SHADER: &str = r#"
     }
 "#;
 
-fn uniforms_f(_render_state: RenderState) -> EmptyUniforms {
-    uniform! {}
-}
-
 fn main() {
     let renderer = Renderer::from_fragment_shader(FRAGMENT_SHADER);
-    renderer.draw(&uniforms_f);
+    renderer.draw();
 }

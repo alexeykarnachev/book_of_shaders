@@ -5,15 +5,8 @@ use glium::glutin::event_loop::{ControlFlow, EventLoop};
 use glium::glutin::window::WindowBuilder;
 use glium::glutin::ContextBuilder;
 use glium::index::{IndicesSource, PrimitiveType};
-use glium::uniforms::Uniforms;
 use glium::vertex::EmptyVertexAttributes;
-use glium::{Display, DrawParameters, Program, Surface};
-
-pub struct RenderState {
-    pub cursor_coords: (f32, f32),
-    pub display_size: (f32, f32),
-    pub passed_time: f32,
-}
+use glium::{uniform, Display, DrawParameters, Program, Surface};
 
 pub struct Renderer {
     display: Display,
@@ -46,35 +39,36 @@ impl Renderer {
         }
     }
 
-    pub fn draw<U: Uniforms>(self, uniforms_f: &'static dyn Fn(RenderState) -> U) {
+    pub fn draw(self) {
         let start_time = Instant::now();
-        let mut cursor_coords = (0.0f32, 0.0f32);
+        let mut cursor = (0.0f32, 0.0f32);
 
         self.event_loop.run(move |event, _, control_flow| {
+            let (width, height) = self.display.get_framebuffer_dimensions();
+            let resolution = (width as f32, height as f32);
+
             match event {
                 Event::WindowEvent { ref event, .. } => match event {
                     WindowEvent::CloseRequested => {
                         *control_flow = ControlFlow::Exit;
                     }
                     WindowEvent::CursorMoved { position, .. } => {
-                        cursor_coords = (position.x as f32, position.y as f32);
+                        cursor = (position.x as f32, resolution.1 - position.y as f32);
                     }
                     _ => (),
                 },
                 _ => (),
             }
 
-            let (width, height) = self.display.get_framebuffer_dimensions();
-            let display_size = (width as f32, height as f32);
-            let passed_time = (Instant::now() - start_time).as_micros() as f32 / 1_000_000f32;
+            let time = (Instant::now() - start_time).as_micros() as f32 / 1_000_000f32;
 
             let mut frame = self.display.draw();
             frame.clear_color(0.0, 0.0, 0.0, 1.0);
-            let uniforms = uniforms_f(RenderState {
-                cursor_coords,
-                display_size,
-                passed_time,
-            });
+            let uniforms = uniform! {
+                u_cursor: cursor,
+                u_resolution: resolution,
+                u_time: time
+            };
             frame
                 .draw(
                     EmptyVertexAttributes { len: 4 },

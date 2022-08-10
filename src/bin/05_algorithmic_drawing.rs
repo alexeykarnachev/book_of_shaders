@@ -1,14 +1,10 @@
-use book_of_shaders::{RenderState, Renderer};
-use glium::{
-    uniform,
-    uniforms::{EmptyUniforms, UniformsStorage},
-};
+use book_of_shaders::Renderer;
 
 const FRAGMENT_SHADER: &str = r#"
     #version 460
 
     uniform float u_time;
-    uniform vec2 u_display_size;
+    uniform vec2 u_resolution;
 
     float PI = 3.14159265359;
     vec3 LINE_COLOR_COLD = vec3(0.0, 0.0, 1.0);
@@ -24,7 +20,7 @@ const FRAGMENT_SHADER: &str = r#"
     out vec4 color;
 
     void main() {
-        vec2 coords = gl_FragCoord.xy / u_display_size;
+        vec2 coords = gl_FragCoord.xy / u_resolution;
         float x = coords.x;
 
         float y = 0.5 * wave(x, 0.3, 8.0, u_time, 0.5) + 0.5 * wave(x, 0.7, 0.1, u_time, 0.5);
@@ -38,16 +34,7 @@ const FRAGMENT_SHADER: &str = r#"
     }
 "#;
 
-type U = UniformsStorage<'static, (f32, f32), UniformsStorage<'static, f32, EmptyUniforms>>;
-
-fn uniforms_f(render_state: RenderState) -> U {
-    uniform! {
-        u_time: render_state.passed_time,
-        u_display_size: render_state.display_size,
-    }
-}
-
 fn main() {
     let renderer = Renderer::from_fragment_shader(FRAGMENT_SHADER);
-    renderer.draw(&uniforms_f);
+    renderer.draw();
 }
